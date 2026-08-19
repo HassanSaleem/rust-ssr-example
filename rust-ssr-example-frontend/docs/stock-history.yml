@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: rust_ssr_example_backend
+  description: ''
+  license:
+    name: ''
+  version: 0.1.0
+paths:
+  /api/stock-history:
+    get:
+      tags:
+      - domains::stock_history::routes
+      operationId: list_stock_history
+      responses:
+        '200':
+          description: List stock history rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockHistoryRow'
+        '500':
+          description: Database error
+components:
+  schemas:
+    StockHistoryRow:
+      type: object
+      required:
+      - date
+      - ticker
+      - open
+      - high
+      - low
+      - close
+      - volume
+      properties:
+        close:
+          type: string
+        date:
+          type: string
+          format: date
+        high:
+          type: string
+        low:
+          type: string
+        open:
+          type: string
+        ticker:
+          type: string
+        volume:
+          type: integer
+          format: int64
+          minimum: 0

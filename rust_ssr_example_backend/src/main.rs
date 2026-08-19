@@ -1,4 +1,5 @@
 mod domains;
+mod ssrm;
 
 use std::sync::Arc;
 
@@ -18,6 +19,21 @@ struct ApiDoc;
 
 #[tokio::main]
 async fn main() {
+    // `cargo run -- --export-openapi [path]` writes the spec without needing a DB connection.
+    let mut args = std::env::args().skip(1);
+    if let Some(arg) = args.next() {
+        if arg == "--export-openapi" {
+            let yaml = ApiDoc::openapi()
+                .to_yaml()
+                .expect("failed to serialize OpenAPI spec to YAML");
+            match args.next() {
+                Some(path) => std::fs::write(&path, yaml).expect("failed to write OpenAPI file"),
+                None => print!("{yaml}"),
+            }
+            return;
+        }
+    }
+
     dotenvy::dotenv().ok();
 
     let username = std::env::var("ORACLE_USERNAME").expect("ORACLE_USERNAME must be set");
@@ -39,9 +55,9 @@ async fn main() {
         .merge(domains::stock_history::routes::router())
         .with_state(pool);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000")
         .await
-        .expect("failed to bind to port 3000");
+        .expect("failed to bind to port 8000");
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.expect("server error");
 }

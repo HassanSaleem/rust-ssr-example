@@ -1,14 +1,23 @@
 use std::sync::Arc;
 
-use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
+};
 use oracle::pool::Pool;
+
+use crate::ssrm::{GetRowsRequest, GetRowsResponse};
 
 use super::{model::StockHistoryRow, repository};
 
 pub type DbPool = Arc<Pool>;
 
 pub fn router() -> Router<DbPool> {
-    Router::new().route("/api/stock-history", get(list_stock_history))
+    Router::new()
+        .route("/api/stock-history", get(list_stock_history))
+        .route("/api/stock-history/getRows", post(get_rows))
 }
 
 #[utoipa::path(
@@ -30,4 +39,29 @@ pub async fn list_stock_history(
     .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, format!("task error: {err}")))?
     .map(Json)
     .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))
+}
+
+/// AG Grid Server-Side Row Model datasource endpoint: infinite scroll, sort
+/// and filter. See https://www.ag-grid.com/react-data-grid/server-side-model-datasource/
+pub async fn get_rows(
+    State(pool): State<DbPool>,
+    Json(request): Json<GetRowsRequest>,
+) -> Result<Json<GetRowsResponse<StockHistoryRow>>, (StatusCode, String)> {
+    tokio::task::spawn_blocking(
+        move || -> Result<GetRowsResponse<StockHistoryRow>, repository::RepositoryError> {
+            let conn = pool.get()?;
+            repository::get_rows(&conn, &request)
+        },
+    )
+    .await
+    .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, format!("task error: {err}")))?
+    .map(Json)
+    .map_err(|err| {
+        let status = if err.is_client_error() {
+            StatusCode::BAD_REQUEST
+        } else {
+            StatusCode::INTERNAL_SERVER_ERROR
+        };
+        (status, err.to_string())
+    })
 }

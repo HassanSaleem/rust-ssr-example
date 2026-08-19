@@ -14,5 +14,5 @@ bigdecimal = { version = "0.3", features = ["serde"] }
 dotenvy = "0.15"
 
 # OpenAPI generation crates
-utoipa = { version = "4", features = ["axum_extras", "chrono"] }
+utoipa = { version = "4", features = ["axum_extras", "chrono", "yaml"] }
 utoipa-swagger-ui = { version = "7", features = ["axum"] }
