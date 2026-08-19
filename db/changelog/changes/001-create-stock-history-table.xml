@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-stock-history-table" author="market_data">
+        <createTable tableName="STOCK_HISTORY">
+            <!-- DATE is an Oracle reserved word; Liquibase quotes it automatically -->
+            <column name="DATE" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TICKER" type="VARCHAR2(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="OPEN" type="NUMBER(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="HIGH" type="NUMBER(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LOW" type="NUMBER(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CLOSE" type="NUMBER(19,4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VOLUME" type="NUMBER(20,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="STOCK_HISTORY" columnNames="DATE, TICKER" constraintName="PK_STOCK_HISTORY"/>
+    </changeSet>
+
+</databaseChangeLog>
