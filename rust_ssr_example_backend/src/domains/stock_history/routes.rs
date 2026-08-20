@@ -43,6 +43,16 @@ pub async fn list_stock_history(
 
 /// AG Grid Server-Side Row Model datasource endpoint: infinite scroll, sort
 /// and filter. See https://www.ag-grid.com/react-data-grid/server-side-model-datasource/
+#[utoipa::path(
+    post,
+    path = "/api/stock-history/getRows",
+    request_body = GetRowsRequest,
+    responses(
+        (status = 200, description = "Server-side rows for AG Grid", body = StockHistoryGetRowsResponse),
+        (status = 400, description = "Invalid request"),
+        (status = 500, description = "Database error")
+    )
+)]
 pub async fn get_rows(
     State(pool): State<DbPool>,
     Json(request): Json<GetRowsRequest>,

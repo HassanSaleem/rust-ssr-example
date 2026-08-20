@@ -3,8 +3,11 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize)]
+use crate::domains::stock_history::StockHistoryRow;
+
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct GetRowsRequest {
     pub start_row: i64,
@@ -15,14 +18,14 @@ pub struct GetRowsRequest {
     pub filter_model: HashMap<String, FilterModel>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SortModelItem {
     pub col_id: String,
     pub sort: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(tag = "filterType", rename_all = "lowercase")]
 pub enum FilterModel {
     Text(TextFilterModel),
@@ -30,7 +33,7 @@ pub enum FilterModel {
     Date(DateFilterModel),
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct TextFilterModel {
     #[serde(rename = "type")]
@@ -38,7 +41,7 @@ pub struct TextFilterModel {
     pub filter: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct NumberFilterModel {
     #[serde(rename = "type")]
@@ -47,7 +50,7 @@ pub struct NumberFilterModel {
     pub filter_to: Option<f64>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct DateFilterModel {
     #[serde(rename = "type")]
@@ -56,8 +59,9 @@ pub struct DateFilterModel {
     pub date_to: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
+#[aliases(StockHistoryGetRowsResponse = GetRowsResponse<StockHistoryRow>)]
 pub struct GetRowsResponse<T> {
     pub row_data: Vec<T>,
     pub row_count: i64,

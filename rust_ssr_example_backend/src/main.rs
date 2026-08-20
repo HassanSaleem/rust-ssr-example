@@ -3,17 +3,32 @@ mod ssrm;
 
 use std::sync::Arc;
 
+use axum::http::{HeaderValue, Method};
 use axum::Router;
 use oracle::pool::PoolBuilder;
+use tower_http::cors::CorsLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use domains::stock_history::StockHistoryRow;
+use ssrm::{DateFilterModel, FilterModel, GetRowsRequest, NumberFilterModel, SortModelItem, StockHistoryGetRowsResponse, TextFilterModel};
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(domains::stock_history::routes::list_stock_history),
-    components(schemas(StockHistoryRow))
+    paths(
+        domains::stock_history::routes::list_stock_history,
+        domains::stock_history::routes::get_rows,
+    ),
+    components(schemas(
+        StockHistoryRow,
+        GetRowsRequest,
+        SortModelItem,
+        FilterModel,
+        TextFilterModel,
+        NumberFilterModel,
+        DateFilterModel,
+        StockHistoryGetRowsResponse,
+    ))
 )]
 struct ApiDoc;
 
@@ -50,9 +65,21 @@ async fn main() {
     .expect("failed to create Oracle connection pool");
     let pool = Arc::new(pool);
 
+    let frontend_origin =
+        std::env::var("FRONTEND_ORIGIN").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let cors = CorsLayer::new()
+        .allow_origin(
+            frontend_origin
+                .parse::<HeaderValue>()
+                .expect("FRONTEND_ORIGIN must be a valid origin"),
+        )
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers(tower_http::cors::Any);
+
     let app = Router::new()
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
         .merge(domains::stock_history::routes::router())
+        .layer(cors)
         .with_state(pool);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000")
